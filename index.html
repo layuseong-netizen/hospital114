@@ -465,7 +465,8 @@ function checkOpen(h){
   const hhmm=now.getHours()*100+now.getMinutes();
   const d=DAYS[todayIdx];
   const s=h[`${d}TrmtStart`],e=h[`${d}TrmtEnd`];
-  if(!s||!e||s==='0000'||e==='0000') return {open:false,time:null};
+  if(!s||!e||s==='0000'||e==='0000')
+    return {open:null, time:null}; // 데이터 없음
   const isOpen=hhmm>=parseInt(s)&&hhmm<=parseInt(e);
   return {open:isOpen, time:`${formatTime(s)} ~ ${formatTime(e)}`};
 }
@@ -581,7 +582,9 @@ function renderResults(items,total,page){
         <div class="open-status">
           <div class="dot ${open?'open':'close'}"></div>
           <div>
-            <div class="open-text ${open?'open':'close'}">${open?'운영중':'운영종료'}</div>
+           <div class="open-text ${open===null?'':'open'===String(open)?'open':'close'}">
+  ${open===null?'운영시간 미제공':open?'운영중':'운영종료'}
+</div>
             <div class="close-time">${time||todayHours}</div>
           </div>
         </div>
