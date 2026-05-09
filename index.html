@@ -442,7 +442,9 @@ function loadSigungu(){
   sg.innerHTML='<option value="">시/군/구 선택</option>';
   (sigunguData[sido]||[]).forEach(s=>{
     const o=document.createElement('option');
-    o.value=s;o.textContent=s;sg.appendChild(o);
+    o.value=s.code; // 숫자 코드
+    o.textContent=s.name;
+    sg.appendChild(o);
   });
   updateRegionInfo();
 }
