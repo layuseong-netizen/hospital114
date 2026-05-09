@@ -7,46 +7,64 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { endpoint, ...params } = req.query;
+    const { serviceKey, action, ...rest } = req.query;
 
-    if (!endpoint) {
-      return res.status(400).json({ error: 'endpoint 파라미터가 없습니다' });
-    }
+    if (!serviceKey) return res.status(400).json({ error: 'serviceKey 없음' });
 
-    const ALLOWED = [
-      'apis.data.go.kr/B551182/hospInfoServicev2',
-      'apis.data.go.kr/B551182/pharmacyInfoService',
-    ];
-
-    const isAllowed = ALLOWED.some(a => endpoint.includes(a));
-    if (!isAllowed) {
-      return res.status(403).json({ error: '허용되지 않은 엔드포인트' });
-    }
-
-    // 파라미터 재조합 (serviceKey 인코딩 주의)
-    const qs = Object.entries(params)
-      .map(([k, v]) => `${k}=${v}`)
+    const BASE = 'https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList';
+    const qs = Object.entries(rest)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join('&');
 
-    const url = `https://${endpoint}?${qs}`;
-    console.log('Fetching:', url);
+    const url = `${BASE}?serviceKey=${serviceKey}&${qs}`;
+    console.log('URL:', url);
 
-    const response = await fetch(url, {
-      headers: { 'Accept': 'application/json' }
-    });
+    const response = await fetch(url);
+    const xml = await response.text();
+    console.log('XML preview:', xml.substring(0, 300));
 
-    const text = await response.text();
+    // XML → JSON 변환
+    const totalCount = xml.match(/<totalCount>(\d+)<\/totalCount>/)?.[1] || '0';
+    const resultCode = xml.match(/<resultCode>(\w+)<\/resultCode>/)?.[1] || '';
+    const resultMsg = xml.match(/<resultMsg>([^<]+)<\/resultMsg>/)?.[1] || '';
 
-    // XML로 왔을 경우 처리
-    if (text.trim().startsWith('<')) {
-      return res.status(200).send(text);
+    if (resultCode !== '00') {
+      return res.status(200).json({ error: resultMsg, resultCode });
     }
 
-    const data = JSON.parse(text);
-    return res.status(200).json(data);
+    // item 파싱
+    const items = [];
+    const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g);
+    for (const match of itemMatches) {
+      const itemXml = match[1];
+      const get = (tag) => itemXml.match(new RegExp(`<${tag}>([^<]*)<\/${tag}>`))?.[1]?.trim() || '';
+      items.push({
+        yadmNm: get('yadmNm'),
+        addr: get('addr'),
+        telno: get('telno'),
+        clCdNm: get('clCdNm'),
+        sidoCdNm: get('sidoCdNm'),
+        sgguCdNm: get('sgguCdNm'),
+        dgsbjtCdNm: get('dgsbjtCdNm'),
+        monTrmtStart: get('monTrmtStart'), monTrmtEnd: get('monTrmtEnd'),
+        tueTrmtStart: get('tueTrmtStart'), tueTrmtEnd: get('tueTrmtEnd'),
+        wedTrmtStart: get('wedTrmtStart'), wedTrmtEnd: get('wedTrmtEnd'),
+        thuTrmtStart: get('thuTrmtStart'), thuTrmtEnd: get('thuTrmtEnd'),
+        friTrmtStart: get('friTrmtStart'), friTrmtEnd: get('friTrmtEnd'),
+        satTrmtStart: get('satTrmtStart'), satTrmtEnd: get('satTrmtEnd'),
+        sunTrmtStart: get('sunTrmtStart'), sunTrmtEnd: get('sunTrmtEnd'),
+      });
+    }
+
+    return res.status(200).json({
+      response: {
+        header: { resultCode, resultMsg },
+        body: { totalCount: parseInt(totalCount), items: { item: items } }
+      }
+    });
 
   } catch (err) {
-    console.error('Proxy error:', err);
-    return res.status(500).json({ error: err.message, stack: err.stack });
+    console.error('Error:', err);
+    return res.status(500).json({ error: err.message });
   }
 }
