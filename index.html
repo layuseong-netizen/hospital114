@@ -254,24 +254,21 @@ async function doSearch(page=1){
   const name=document.getElementById('searchInput').value.trim();
   const sido=document.getElementById('sidoSelect').value;
   const sigungu=document.getElementById('sigunguSelect').value;
-  const type=document.getElementById('typeSelect').value;
   showLoading();
   try{
-    const isPharm=type==='pharm';
-    const endpoint=isPharm
-      ?'apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList'
-      :'apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList';
     const params=new URLSearchParams({
-      endpoint, serviceKey:apiKey,
-      pageNo:page, numOfRows:PAGE_SIZE, _type:'json'
+      serviceKey: apiKey,
+      pageNo: page,
+      numOfRows: PAGE_SIZE,
     });
     if(name) params.append('yadmNm',name);
     if(sido) params.append('sidoCd',sido);
     if(sigungu) params.append('sgguCd',sigungu);
-    if(currentDept&&!isPharm) params.append('dgsbjtCd',getDeptCode(currentDept));
+    if(currentDept) params.append('dgsbjtCd',getDeptCode(currentDept));
     const res=await fetch(`${PROXY}?${params}`);
     if(!res.ok) throw new Error('서버 오류 '+res.status);
     const data=await res.json();
+    if(data.error) throw new Error(data.error);
     const body=data?.response?.body;
     const total=body?.totalCount||0;
     const raw=body?.items?.item;
