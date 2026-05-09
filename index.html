@@ -512,20 +512,26 @@ async function doSearch(page=1){
   const name=document.getElementById('searchInput').value.trim();
   const sido=document.getElementById('sidoSelect').value;
   const sigungu=document.getElementById('sigunguSelect').value;
+  const type=document.getElementById('typeSelect').value;
   updateRegionInfo();
+
+  // 검색 전 초기화면 숨기기
+  const emptyState=document.getElementById('emptyState');
+  if(emptyState) emptyState.style.display='none';
+
   showLoading();
   try{
-   const type=document.getElementById('typeSelect').value;
-const params=new URLSearchParams({
-  serviceKey:API_KEY,
-  pageNo:page,
-  numOfRows:PAGE_SIZE,
-  type:type,
-});
+    const params=new URLSearchParams({
+      serviceKey:API_KEY,
+      pageNo:page,
+      numOfRows:PAGE_SIZE,
+      type:type,
+    });
     if(name) params.append('yadmNm',name);
     if(sido) params.append('sidoCd',sido);
     if(sigungu) params.append('sgguCd',sigungu);
-    if(currentDept) params.append('dgsbjtCd',getDeptCode(currentDept));
+    if(currentDept&&type!=='pharm') params.append('dgsbjtCd',getDeptCode(currentDept));
+
     const res=await fetch(`${PROXY}?${params}`);
     if(!res.ok) throw new Error('서버 오류 '+res.status);
     const data=await res.json();
