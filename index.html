@@ -1,1 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>병원약국114 — 전국 병원·약국 찾기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5f7fa;color:#1a1a2e;font-size:14px}
+:root{--primary:#2563eb;--primary2:#1d4ed8;--red:#ef4444;--green:#16a34a;--border:#e5e7eb;--card:#fff;--gray:#6b7280}
+header{background:#fff;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:20px;font-weight:800;color:var(--primary)}.logo span{color:var(--red)}
+.header-ad{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:6px 14px;font-size:12px;color:#0369a1;display:flex;align-items:center;gap:6px}
+.ad-tag{background:#0369a1;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700}
+.setup-toggle{background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;color:var(--gray)}
+.api-setup{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;margin:20px;display:none}
+.api-setup.show{display:block}
+.api-setup h3{font-size:15px;font-weight:700;margin-bottom:12px}
+.api-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.api-row label{font-size:12px;color:var(--gray);white-space:nowrap;width:80px}
+.api-row input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;outline:none;font-family:monospace}
+.api-row input:focus{border-color:var(--primary)}
+.btn-connect{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;margin-top:4px}
+.api-note{font-size:12px;color:var(--gray);margin-top:8px;line-height:1.6}
+.api-status{display:flex;align-items:center;gap:6px;font-size:13px;padding:8px 12px;border-radius:8px;margin-top:10px}
+.api-status.ok{background:#f0fdf4;color:var(--green)}
+.api-status.err{background:#fef2f2;color:var(--red)}
+.search-section{background:linear-gradient(135deg,#1e40af,#2563eb);padding:24px 20px}
+.search-section h1{color:#fff;font-size:20px;font-weight:700;margin-bottom:4px}
+.search-section p{color:#bfdbfe;font-size:13px;margin-bottom:14px}
+.search-box{background:#fff;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:center}
+.search-box input{flex:1;border:none;outline:none;font-size:14px}
+.search-box input::placeholder{color:#9ca3af}
+.btn-search{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.region-selects{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.region-selects select{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;outline:none}
+.region-selects select option{color:#1a1a2e;background:#fff}
+.quick-btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.qbtn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;transition:all .15s}
+.qbtn:hover,.qbtn.active{background:#fff;color:var(--primary)}
+.toolbar{background:#fff;border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.filter-btn{background:#f3f4f6;border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;transition:all .15s}
+.filter-btn.on{background:#eff6ff;border-color:var(--primary);color:var(--primary);font-weight:600}
+.toolbar-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.sort-btn{background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--gray)}
+.sort-btn.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.layout{display:flex;max-width:1100px;margin:0 auto}
+.list-panel{flex:1;padding:14px 20px;min-width:0}
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.list-header h2{font-size:14px;font-weight:700}
+.result-count{font-size:12px;color:var(--gray)}
+.loading{text-align:center;padding:40px;color:var(--gray)}
+.loading i{font-size:40px;color:var(--primary);animation:spin 1s linear infinite;display:block;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:var(--gray)}
+.empty i{font-size:48px;display:block;margin-bottom:12px;color:#d1d5db}
+.h-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.h-card:hover{border-color:var(--primary);box-shadow:0 2px 10px rgba(37,99,235,.08)}
+.h-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.h-name{font-size:15px;font-weight:700}
+.badge{font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap;margin-left:6px}
+.badge-hospital{background:#eff6ff;color:#1d4ed8}
+.badge-clinic{background:#fff7ed;color:#c2410c}
+.badge-pharmacy{background:#f0fdf4;color:#15803d}
+.h-info{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.h-info span{font-size:12px;color:var(--gray);display:flex;align-items:center;gap:3px}
+.open-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600}
+.open-badge.open{color:var(--green)}.open-badge.close{color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%}
+.dot.open{background:var(--green)}.dot.close{background:var(--red)}
+.h-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid #f3f4f6}
+.h-actions{display:flex;gap:5px}
+.h-btn{background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:3px;color:#374151;transition:all .15s}
+.h-btn:hover{border-color:var(--primary);color:var(--primary)}
+.h-btn.call{background:var(--green);color:#fff;border-color:var(--green)}
+.ad-card{background:#fafafa;border:1px dashed #d1d5db;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.ad-card p{font-size:13px;color:#4b5563;flex:1}
+.ad-card a{color:var(--primary);font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
+.right-panel{width:260px;padding:14px;flex-shrink:0}
+.side-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.side-card h3{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.info-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+.info-row:last-child{border-bottom:none}
+.info-row .val.open{color:var(--green);font-weight:600}
+.ad-side{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px;text-align:center}
+.ad-side p{font-size:12px;color:#78350f;line-height:1.6;margin:6px 0}
+.ad-side a{color:#b45309;font-size:12px;font-weight:600;text-decoration:none}
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;padding:16px 0}
+.page-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;transition:all .15s}
+.page-btn:hover{border-color:var(--primary);color:var(--primary)}
+.page-btn.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.page-btn:disabled{opacity:.4;cursor:default}
+</style>
+</head>
+<body>
 
+<header>
+  <div class="logo">병원약국<span>114</span></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="setup-toggle" onclick="toggleSetup()"><i class="ti ti-key"></i> API 설정</button>
+    <div class="header-ad"><span class="ad-tag">광고</span> 실손보험 무료 비교 <a href="#" style="color:#0369a1;font-weight:600;margin-left:4px">견적받기 →</a></div>
+  </div>
+</header>
+
+<div class="api-setup" id="apiSetup">
+  <h3><i class="ti ti-key" style="color:#2563eb"></i> 공공API 인증키 설정</h3>
+  <div class="api-row">
+    <label>병원 API</label>
+    <input type="password" id="keyHospital" placeholder="건강보험심사평가원 병원진료정보 인증키">
+  </div>
+  <div class="api-row">
+    <label>약국 API</label>
+    <input type="password" id="keyPharmacy" placeholder="약국정보서비스 인증키 (선택)">
+  </div>
+  <button class="btn-connect" onclick="connectAPI()"><i class="ti ti-plug-connected"></i> 연결하기</button>
+  <div class="api-note">🔒 입력한 키는 브라우저 내에서만 사용되며 외부로 전송되지 않습니다.</div>
+  <div id="apiStatus"></div>
+</div>
+
+<div class="search-section">
+  <h1>전국 병원·약국 찾기</h1>
+  <p>공공데이터 기반 · 실시간 운영정보 제공</p>
+  <div class="search-box">
+    <i class="ti ti-search" style="color:#2563eb;font-size:18px;flex-shrink:0"></i>
+    <input type="text" id="searchInput" placeholder="병원명 검색...">
+    <button class="btn-search" onclick="doSearch()">검색</button>
+  </div>
+  <div class="region-selects">
+    <select id="sidoSelect" onchange="loadSigungu()">
+      <option value="">시/도 선택</option>
+      <option value="110000">서울특별시</option>
+      <option value="210000">부산광역시</option>
+      <option value="220000">대구광역시</option>
+      <option value="230000">인천광역시</option>
+      <option value="240000">광주광역시</option>
+      <option value="250000">대전광역시</option>
+      <option value="260000">울산광역시</option>
+      <option value="310000">경기도</option>
+      <option value="320000">강원도</option>
+      <option value="330000">충청북도</option>
+      <option value="340000">충청남도</option>
+      <option value="350000">전라북도</option>
+      <option value="360000">전라남도</option>
+      <option value="370000">경상북도</option>
+      <option value="380000">경상남도</option>
+      <option value="390000">제주특별자치도</option>
+    </select>
+    <select id="sigunguSelect"><option value="">시/군/구 선택</option></select>
+    <select id="typeSelect">
+      <option value="hosp">병원·의원</option>
+      <option value="pharm">약국</option>
+    </select>
+  </div>
+  <div class="quick-btns">
+    <button class="qbtn active" onclick="setDept(this,'')">전체</button>
+    <button class="qbtn" onclick="setDept(this,'내과')">내과</button>
+    <button class="qbtn" onclick="setDept(this,'정형외과')">정형외과</button>
+    <button class="qbtn" onclick="setDept(this,'소아청소년과')">소아과</button>
+    <button class="qbtn" onclick="setDept(this,'치과')">치과</button>
+    <button class="qbtn" onclick="setDept(this,'피부과')">피부과</button>
+    <button class="qbtn" onclick="setDept(this,'산부인과')">산부인과</button>
+  </div>
+</div>
+
+<div class="toolbar">
+  <button class="filter-btn" onclick="toggleFilter(this)"><i class="ti ti-door-enter"></i> 운영중만</button>
+  <button class="filter-btn" onclick="toggleFilter(this)"><i class="ti ti-moon"></i> 야간진료</button>
+  <button class="filter-btn" onclick="toggleFilter(this)"><i class="ti ti-calendar-week"></i> 주말진료</button>
+  <div class="toolbar-right">
+    <span style="font-size:12px;color:var(--gray)">정렬:</span>
+    <button class="sort-btn on" onclick="setSort(this)">이름순</button>
+    <button class="sort-btn" onclick="setSort(this)">거리순</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="list-panel">
+    <div class="list-header">
+      <h2 id="listTitle">병원·약국 목록</h2>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+    <div id="listContainer">
+      <div class="empty">
+        <i class="ti ti-building-hospital"></i>
+        <p style="font-weight:600;margin-bottom:6px">API 키를 설정하고 검색해보세요</p>
+        <p style="font-size:12px">상단 API 설정 버튼을 눌러 인증키를 입력하세요</p>
+      </div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <div class="right-panel">
+    <div class="side-card">
+      <h3><i class="ti ti-clock" style="color:#2563eb;font-size:15px"></i> 현재 시각</h3>
+      <div style="font-size:22px;font-weight:700;color:var(--primary);text-align:center;padding:8px 0" id="clock">--:--:--</div>
+      <div id="todayInfo" style="font-size:12px;color:var(--gray);text-align:center"></div>
+    </div>
+    <div class="side-card">
+      <h3><i class="ti ti-info-circle" style="color:#2563eb;font-size:15px"></i> 검색 현황</h3>
+      <div class="info-row"><span>검색결과</span><span class="val open" id="totalCount">-</span></div>
+      <div class="info-row"><span>현재 페이지</span><span id="pageInfo">-</span></div>
+      <div class="info-row"><span>API 상태</span><span id="apiConnected" style="color:var(--gray)">미연결</span></div>
+    </div>
+    <div class="ad-side">
+      <span class="ad-tag" style="background:#f59e0b;display:inline-block;margin-bottom:6px">광고</span>
+      <p>의료비 걱정 없이<br>실손보험으로 대비하세요</p>
+      <a href="#">무료 보험료 비교 →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ★ Vercel 배포 후 본인 주소로 변경하세요
+const PROXY = '/api/proxy';
+
+let apiKey='', pharmKey='', currentPage=1, currentDept='';
+const PAGE_SIZE=10;
+
+const sigunguData={
+  '110000':['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'],
+  '210000':['강서구','금정구','기장군','남구','동구','동래구','부산진구','북구','사상구','사하구','서구','수영구','연제구','영도구','중구','해운대구'],
+  '310000':['가평군','고양시','과천시','광명시','광주시','구리시','군포시','김포시','남양주시','동두천시','부천시','성남시','수원시','시흥시','안산시','안성시','안양시','양주시','양평군','여주시','연천군','오산시','용인시','의왕시','의정부시','이천시','파주시','평택시','포천시','하남시','화성시'],
+  '380000':['거제시','거창군','고성군','김해시','남해군','밀양시','사천시','산청군','양산시','의령군','진주시','창녕군','창원시','통영시','하동군','함안군','함양군','합천군'],
+};
+
+function toggleSetup(){document.getElementById('apiSetup').classList.toggle('show')}
+
+function loadSigungu(){
+  const sido=document.getElementById('sidoSelect').value;
+  const sg=document.getElementById('sigunguSelect');
+  sg.innerHTML='<option value="">시/군/구 선택</option>';
+  (sigunguData[sido]||[]).forEach(s=>{
+    const o=document.createElement('option');
+    o.value=s;o.textContent=s;sg.appendChild(o);
+  });
+}
+
+async function connectAPI(){
+  const k=document.getElementById('keyHospital').value.trim();
+  const pk=document.getElementById('keyPharmacy').value.trim();
+  const st=document.getElementById('apiStatus');
+  if(!k){st.innerHTML='<div class="api-status err"><i class="ti ti-alert-circle"></i> 병원 API 키를 입력해주세요</div>';return;}
+  apiKey=k; pharmKey=pk;
+  document.getElementById('apiConnected').textContent='연결됨';
+  document.getElementById('apiConnected').style.color='var(--green)';
+  st.innerHTML='<div class="api-status ok"><i class="ti ti-circle-check"></i> API 키 저장 완료! 지역을 선택하고 검색해보세요</div>';
+  setTimeout(()=>document.getElementById('apiSetup').classList.remove('show'),1500);
+}
+
+async function doSearch(page=1){
+  if(!apiKey){document.getElementById('apiSetup').classList.add('show');return;}
+  currentPage=page;
+  const name=document.getElementById('searchInput').value.trim();
+  const sido=document.getElementById('sidoSelect').value;
+  const sigungu=document.getElementById('sigunguSelect').value;
+  const type=document.getElementById('typeSelect').value;
+  showLoading();
+  try{
+    const isPharm=type==='pharm';
+    const endpoint=isPharm
+      ?'apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList'
+      :'apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList';
+    const params=new URLSearchParams({
+      endpoint, serviceKey:apiKey,
+      pageNo:page, numOfRows:PAGE_SIZE, _type:'json'
+    });
+    if(name) params.append('yadmNm',name);
+    if(sido) params.append('sidoCd',sido);
+    if(sigungu) params.append('sgguCd',sigungu);
+    if(currentDept&&!isPharm) params.append('dgsbjtCd',getDeptCode(currentDept));
+    const res=await fetch(`${PROXY}?${params}`);
+    if(!res.ok) throw new Error('서버 오류 '+res.status);
+    const data=await res.json();
+    const body=data?.response?.body;
+    const total=body?.totalCount||0;
+    const raw=body?.items?.item;
+    const items=raw?(Array.isArray(raw)?raw:[raw]):[];
+    renderResults(items,total,page);
+  }catch(e){showError(e.message);}
+}
+
+function getDeptCode(d){
+  const m={'내과':'01','신경과':'02','외과':'04','정형외과':'05','신경외과':'06','성형외과':'08','소아청소년과':'10','산부인과':'11','안과':'12','이비인후과':'13','피부과':'14','치과':'49'};
+  return m[d]||'';
+}
+
+function checkOpen(h){
+  const now=new Date(),day=now.getDay(),hhmm=now.getHours()*100+now.getMinutes();
+  const dm=['sun','mon','tue','wed','thu','fri','sat'][day];
+  const s=h[`${dm}TrmtStart`],e=h[`${dm}TrmtEnd`];
+  if(!s||!e) return false;
+  return hhmm>=parseInt(s)&&hhmm<=parseInt(e);
+}
+
+function renderResults(items,total,page){
+  document.getElementById('totalCount').textContent=total.toLocaleString()+'건';
+  document.getElementById('pageInfo').textContent=`${page}/${Math.ceil(total/PAGE_SIZE)||1}`;
+  document.getElementById('resultCount').textContent=`총 ${total.toLocaleString()}건`;
+  const c=document.getElementById('listContainer');
+  if(!items.length){
+    c.innerHTML='<div class="empty"><i class="ti ti-search-off"></i><p style="font-weight:600">검색 결과가 없습니다</p><p style="font-size:12px">다른 지역이나 검색어를 시도해보세요</p></div>';
+    document.getElementById('pagination').innerHTML='';return;
+  }
+  c.innerHTML='';
+  items.forEach((h,i)=>{
+    if(i===4){
+      const ad=document.createElement('div');
+      ad.className='ad-card';
+      ad.innerHTML=`<span class="ad-tag">광고</span><p>🏥 실손보험으로 의료비 절감하세요</p><a href="#">무료 비교 →</a>`;
+      c.appendChild(ad);
+    }
+    const isPharm=!h.clCdNm||h.ykiho;
+    const typeLabel=isPharm?'약국':(h.clCdNm||'의원');
+    const badgeCls=isPharm?'badge-pharmacy':h.clCdNm?.includes('병원')?'badge-hospital':'badge-clinic';
+    const tel=h.telno||'-';
+    const addr=h.addr||'-';
+    const openYn=checkOpen(h);
+    const card=document.createElement('div');
+    card.className='h-card';
+    card.innerHTML=`
+      <div class="h-top">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:4px">
+            <span class="h-name">${h.yadmNm||'-'}</span>
+            <span class="badge ${badgeCls}">${typeLabel}</span>
+          </div>
+          <div class="h-info">
+            <span><i class="ti ti-map-pin"></i>${addr}</span>
+            ${tel!=='-'?`<span><i class="ti ti-phone"></i>${tel}</span>`:''}
+          </div>
+          ${h.dgsbjtCdNm?`<div style="font-size:12px;color:#6b7280;margin-top:2px"><i class="ti ti-stethoscope" style="font-size:12px"></i> ${h.dgsbjtCdNm}</div>`:''}
+        </div>
+        <span class="open-badge ${openYn?'open':'close'}">
+          <span class="dot ${openYn?'open':'close'}"></span>${openYn?'운영중':'종료'}
+        </span>
+      </div>
+      <div class="h-footer">
+        <span style="font-size:12px;color:var(--gray)">${h.sidoCdNm||''} ${h.sgguCdNm||''}</span>
+        <div class="h-actions">
+          ${tel!=='-'?`<button class="h-btn call" onclick="event.stopPropagation();window.location='tel:${tel}'"><i class="ti ti-phone"></i> ${tel}</button>`:''}
+          <button class="h-btn"><i class="ti ti-map-pin"></i> 길찾기</button>
+        </div>
+      </div>`;
+    c.appendChild(card);
+  });
+  renderPagination(total,page);
+}
+
+function showLoading(){
+  document.getElementById('listContainer').innerHTML='<div class="loading"><i class="ti ti-loader-2"></i><p>병원 정보를 불러오는 중...</p></div>';
+  document.getElementById('pagination').innerHTML='';
+}
+
+function showError(msg){
+  document.getElementById('listContainer').innerHTML=`<div class="empty"><i class="ti ti-alert-circle" style="color:var(--red)"></i><p style="font-weight:600">오류가 발생했습니다</p><p style="font-size:12px">${msg}</p></div>`;
+}
+
+function renderPagination(total,cur){
+  const tp=Math.min(Math.ceil(total/PAGE_SIZE),10);
+  if(tp<=1){document.getElementById('pagination').innerHTML='';return;}
+  let h=`<button class="page-btn" onclick="doSearch(${cur-1})" ${cur<=1?'disabled':''}>‹</button>`;
+  const s=Math.max(1,cur-2),e=Math.min(tp,cur+2);
+  for(let i=s;i<=e;i++) h+=`<button class="page-btn ${i===cur?'on':''}" onclick="doSearch(${i})">${i}</button>`;
+  h+=`<button class="page-btn" onclick="doSearch(${cur+1})" ${cur>=tp?'disabled':''}>›</button>`;
+  document.getElementById('pagination').innerHTML=h;
+}
+
+function setDept(btn,d){
+  document.querySelectorAll('.qbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');currentDept=d;
+}
+function toggleFilter(btn){btn.classList.toggle('on');}
+function setSort(btn){document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString('ko-KR');
+  const days=['일','월','화','수','목','금','토'];
+  document.getElementById('todayInfo').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
+}
+setInterval(updateClock,1000);updateClock();
+document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+</script>
+</body>
+</html>
