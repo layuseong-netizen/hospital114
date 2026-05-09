@@ -173,10 +173,10 @@ footer a:hover{color:#fff}
     <option value="390000">제주특별자치도</option>
   </select>
   <select id="sigunguSelect"><option value="">시/군/구 선택</option></select>
-  <select id="typeSelect">
-    <option value="hosp">병원·의원</option>
-    <option value="pharm">약국</option>
-  </select>
+  <select id="typeSelect" onchange="updatePlaceholder()">
+  <option value="hosp">병원·의원</option>
+  <option value="pharm">약국</option>
+</select>
 </div>
   <div class="quick-btns">
     <button class="qbtn active" onclick="setDept(this,'')">전체</button>
@@ -651,6 +651,11 @@ function quickRegion(sidoCd, sidoNm){
   loadSigungu();
   document.getElementById('listTitle').textContent=sidoNm+' 병원·약국';
   doSearch();
+}
+  function updatePlaceholder(){
+  const type=document.getElementById('typeSelect').value;
+  const input=document.getElementById('searchInput');
+  input.placeholder=type==='pharm'?'약국명 검색...':'병원명 검색...';
 }
 </script>
 </body>
