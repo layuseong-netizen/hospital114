@@ -153,27 +153,31 @@ footer a:hover{color:#fff}
     <button class="btn-search" onclick="doSearch()">검색</button>
   </div>
   <div class="region-selects">
-    <select id="sidoSelect" onchange="loadSigungu()">
-      <option value="">시/도 선택</option>
-      <option value="110000">서울특별시</option>
-      <option value="210000">부산광역시</option>
-      <option value="220000">대구광역시</option>
-      <option value="230000">인천광역시</option>
-      <option value="240000">광주광역시</option>
-      <option value="250000">대전광역시</option>
-      <option value="260000">울산광역시</option>
-      <option value="310000">경기도</option>
-      <option value="320000">강원도</option>
-      <option value="330000">충청북도</option>
-      <option value="340000">충청남도</option>
-      <option value="350000">전라북도</option>
-      <option value="360000">전라남도</option>
-      <option value="370000">경상북도</option>
-      <option value="380000">경상남도</option>
-      <option value="390000">제주특별자치도</option>
-    </select>
-    <select id="sigunguSelect"><option value="">시/군/구 선택</option></select>
-  </div>
+  <select id="sidoSelect" onchange="loadSigungu()">
+    <option value="">시/도 선택</option>
+    <option value="110000">서울특별시</option>
+    <option value="210000">부산광역시</option>
+    <option value="220000">대구광역시</option>
+    <option value="230000">인천광역시</option>
+    <option value="240000">광주광역시</option>
+    <option value="250000">대전광역시</option>
+    <option value="260000">울산광역시</option>
+    <option value="310000">경기도</option>
+    <option value="320000">강원도</option>
+    <option value="330000">충청북도</option>
+    <option value="340000">충청남도</option>
+    <option value="350000">전라북도</option>
+    <option value="360000">전라남도</option>
+    <option value="370000">경상북도</option>
+    <option value="380000">경상남도</option>
+    <option value="390000">제주특별자치도</option>
+  </select>
+  <select id="sigunguSelect"><option value="">시/군/구 선택</option></select>
+  <select id="typeSelect">
+    <option value="hosp">병원·의원</option>
+    <option value="pharm">약국</option>
+  </select>
+</div>
   <div class="quick-btns">
     <button class="qbtn active" onclick="setDept(this,'')">전체</button>
     <button class="qbtn" onclick="setDept(this,'내과')">내과</button>
